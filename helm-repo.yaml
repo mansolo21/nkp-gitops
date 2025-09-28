@@ -1,0 +1,14 @@
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: nkp-gitops
+  namespace: kommander-flux
+spec:
+  interval: 1m0s
+  url: oci://github.com/mansolo21/nkp-gitops # Utiliza oci:// para repositorios de charts basados en Git
+  # Para repositorios HTTP (si sirves tu index.yaml a través de un servidor web estático)
+  # url: https://<TU_DOMINIO>/my-helm-charts/
+  sourceRef: # Referencia al GitRepository creado anteriormente
+    kind: GitRepository
+    name: my-helm-charts
+    namespace: flux-system

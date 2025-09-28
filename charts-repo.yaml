@@ -1,0 +1,12 @@
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: GitRepository
+metadata:
+  name: nkp-gitops
+  namespace: kommander-flux # O el namespace donde tengas FluxCD
+spec:
+  interval: 1m0s # Frecuencia con la que Flux verificará actualizaciones
+  url: https://github.com/mansolo21/nkp-gitops.git # Reemplaza con la URL de tu repo
+  ref:
+    branch: main # O la rama donde tengas tus charts
+      #secretRef: # Solo si tu repositorio es privado
+      #name: git-credentials
