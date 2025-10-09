@@ -1,0 +1,225 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  annotations:
+    kommander.mesosphere.io/display-name: nkp-pro-ex-01 Workspace
+  labels:
+    caren.nutanix.com/namespace-sync: "true"
+    kubernetes.io/metadata.name: nkp-pro-ex-01-fp7db
+    workspaces.kommander.mesosphere.io/workspace-name: nkp-pro-ex-01-5rg27
+  name: nkp-pro-ex-01-fp7db
+spec:
+  finalizers:
+  - kubernetes
+---
+apiVersion: v1
+data:
+  credentials: WwogICAgewogICAgICAgICJ0eXBlIjogImJhc2ljX2F1dGgiLAogICAgICAgICJkYXRhIjogewogICAgICAgICAgICAicHJpc21DZW50cmFsIjogewogICAgICAgICAgICAgICAgInVzZXJuYW1lIjogImFkbWluIiwKICAgICAgICAgICAgICAgICJwYXNzd29yZCI6ICJ0ZW1wb3JhTDEyISIKICAgICAgICAgICAgfQogICAgICAgIH0KICAgIH0KXQ==
+kind: Secret
+metadata:
+  labels:
+    cluster.x-k8s.io/provider: nutanix
+    konvoy.d2iq.io/cluster-name: nkp-pro-ex-01
+    konvoy.d2iq.io/provider: nutanix
+  name: nkp-pro-ex-01-pc-credentials
+  namespace: nkp-pro-ex-01-fp7db
+type: Opaque
+---
+apiVersion: v1
+data:
+  key: MTAuMjEuMTAyLjIzNDo5NDQwOmFkbWluOnRlbXBvcmFMMTIh
+kind: Secret
+metadata:
+  labels:
+    cluster.x-k8s.io/provider: nutanix
+    konvoy.d2iq.io/cluster-name: nkp-pro-ex-01
+    konvoy.d2iq.io/provider: nutanix
+  name: nkp-pro-ex-01-pc-credentials-for-csi
+  namespace: nkp-pro-ex-01-fp7db
+type: Opaque
+---
+apiVersion: v1
+data:
+  password: ZnJhbmtpZTEy
+  username: bWFudXBhcmVkZXM=
+kind: Secret
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: nkp-pro-ex-01
+    clusterctl.cluster.x-k8s.io/move: ""
+  name: nkp-pro-ex-01-image-registry-credentials
+  namespace: nkp-pro-ex-01-fp7db
+type: Opaque
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  annotations:
+    caren.nutanix.com/cluster-uuid: 01999a08-c31b-7cef-8858-a14e1da92ce5
+  labels:
+    cluster.x-k8s.io/provider: nutanix
+    konvoy.d2iq.io/cluster-name: nkp-pro-ex-01
+    konvoy.d2iq.io/provider: nutanix
+  name: nkp-pro-ex-01
+  namespace: nkp-pro-ex-01-fp7db
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+  controlPlaneEndpoint:
+    host: ""
+    port: 0
+  topology:
+    class: nkp-nutanix-v2.16.0
+    controlPlane:
+      metadata: {}
+      replicas: 3
+    variables:
+    - name: clusterConfig
+      value:
+        addons:
+          ccm:
+            credentials:
+              secretRef:
+                name: nkp-pro-ex-01-pc-credentials
+            strategy: HelmAddon
+          clusterAutoscaler:
+            strategy: HelmAddon
+          cni:
+            provider: Cilium
+            strategy: HelmAddon
+          cosi:
+            strategy: HelmAddon
+          csi:
+            defaultStorage:
+              provider: nutanix
+              storageClassConfig: volume
+            providers:
+              nutanix:
+                credentials:
+                  secretRef:
+                    name: nkp-pro-ex-01-pc-credentials-for-csi
+                storageClassConfigs:
+                  volume:
+                    allowExpansion: true
+                    parameters:
+                      csi.storage.k8s.io/fstype: ext4
+                      description: CSI StorageClass nutanix-volume for nkp-pro-ex-01
+                      flashMode: DISABLED
+                      hypervisorAttached: DISABLED
+                      storageContainer: nkp-1
+                      storageType: NutanixVolumes
+                    reclaimPolicy: Delete
+                    volumeBindingMode: WaitForFirstConsumer
+                strategy: HelmAddon
+            snapshotController:
+              strategy: HelmAddon
+          nfd:
+            strategy: HelmAddon
+          serviceLoadBalancer:
+            configuration:
+              addressRanges:
+              - end: 10.161.46.134
+                start: 10.161.46.131
+            provider: MetalLB
+        controlPlane:
+          autoRenewCertificates:
+            daysBeforeExpiry: 180
+          nodeRegistration:
+            ignorePreflightErrors:
+            - SystemVerification
+          nutanix:
+            machineDetails:
+              bootType: uefi
+              cluster:
+                name: kestrel02-3
+                type: name
+              image:
+                name: nkp-rocky-9.6-release-cis-1.33.2-20250811224530.qcow2
+                type: name
+              memorySize: 8Gi
+              subnets:
+              - name: nkp-1
+                type: name
+              systemDiskSize: 80Gi
+              vcpuSockets: 4
+              vcpusPerSocket: 1
+        dns:
+          coreDNS: {}
+        encryptionAtRest:
+          providers:
+          - secretbox: {}
+        imageRegistries:
+        - credentials:
+            secretRef:
+              name: nkp-pro-ex-01-image-registry-credentials
+          url: https://registry-1.docker.io
+        nutanix:
+          controlPlaneEndpoint:
+            host: 10.161.46.130
+            port: 6443
+            virtualIP:
+              provider: KubeVIP
+          prismCentralEndpoint:
+            credentials:
+              secretRef:
+                name: nkp-pro-ex-01-pc-credentials
+            insecure: true
+            url: https://10.21.102.234:9440
+        users:
+        - name: konvoy
+          sshAuthorizedKeys:
+          - |
+            ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC/e8CQga+ddx3S3acEHLoEm4W81bsvrJxH4TbYeg+XaYK9WtZ1JgjvuQPWDcjzJbV/pvxnLrdpgW3VDZ8I9N2YcN0Pl4rduGc7ffoX7UmMoEd8lyZKny5o/fZdragExmab645cLlI4Kq50LC2ho9Ewnj2OALbDltGw79pkjtannFZdsjs/pVMKSWdk20Qtwkp2g/Sv/JXDE2HoEOTGXOhYcvjj4gRFgl4cAQNq11hLdZ82C3zbchgIwCS9wZ5YKrl4dQcBfgEf9C5m+WNvuOyfRm9WqoeBJWgoP8238Ykhb6PtXsqvx7xT6YirHNRDxsJsntX/cs8dF7z0N9mCy0oLs2xyiWKYvEDK6hgENHdkKwXtKo+cK3N9Gqy7U4RSv90Qqyz+j4zc3h6MhCtVSov6P5v7ZnPceC3haNT4hQQPmzc4nww8HwNIbxxpSDy19dlR7yxDBHXcLbF6QPm/8lW9FeaxUpRzLzTx/2X/Ysq8M5+uW88Btr83xUB64Pht9E0=
+          sudo: ALL=(ALL) NOPASSWD:ALL
+    version: v1.33.2
+    workers:
+      machineDeployments:
+      - class: default-worker
+        metadata:
+          annotations:
+            cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size: "4"
+            cluster.x-k8s.io/cluster-api-autoscaler-node-group-min-size: "4"
+        name: md-0
+        variables:
+          overrides:
+          - name: workerConfig
+            value:
+              nodeRegistration:
+                ignorePreflightErrors:
+                - SystemVerification
+              nutanix:
+                machineDetails:
+                  bootType: uefi
+                  cluster:
+                    name: kestrel02-3
+                    type: name
+                  image:
+                    name: nkp-rocky-9.6-release-cis-1.33.2-20250811224530.qcow2
+                    type: name
+                  memorySize: 16Gi
+                  subnets:
+                  - name: nkp-1
+                    type: name
+                  systemDiskSize: 80Gi
+                  vcpuSockets: 8
+                  vcpusPerSocket: 1
+---
+apiVersion: workspaces.kommander.mesosphere.io/v1alpha1
+kind: Workspace
+metadata:
+  annotations:
+    kommander.mesosphere.io/display-name: nkp-pro-ex-01 Workspace
+    workspace.kommander.mesosphere.io/allow-existing-namespace: "true"
+  labels:
+    workspaces.kommander.mesosphere.io/gc-eligible: "true"
+  name: nkp-pro-ex-01-5rg27
+spec:
+  clusterLabels:
+    workspaces.kommander.mesosphere.io/workspace-ref: 77d750d0-1d6d-4fff-9bbe-3e87caafb1ab
+  namespaceName: nkp-pro-ex-01-fp7db
+  version: v2.16.0

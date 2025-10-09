@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: nkp-pro-ex-02-fhrl9-rs5zn    #must exist workspace-namespace
+  name: velero-overrides
+data:
+  values.yaml: |
+    credentials:
+      extraSecretRef: ""
+    configuration:
+      backupStorageLocation:
+        - name: ntnx-object-nkp
+          bucket: nkp-pro-ex-02     #must exist
+          provider: "aws" 
+          default: true
+          config:
+            region: us-east-1
+            s3ForcePathStyle: "true"
+            insecureSkipTLSVerify: "true"
+            s3Url: "http://10.161.46.152:80"
+            # profile should be set to the AWS profile name mentioned in the secret
+            profile: ntnx-object-nkp
+          credential:
+            key: aws
+            name: velero-nutanix-credentials
+

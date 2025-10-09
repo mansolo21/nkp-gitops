@@ -1,0 +1,12 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: NutanixFailureDomain
+metadata:
+  name: fd-2                # must be unique per namespace
+  namespace: nkp-pro-ex-01-lq9q6     # same namespace as the cluster
+spec:
+  prismElementCluster:
+    type: name
+    name: kestrel03-3
+  subnets:
+    - type: name
+      name: nkp-2

@@ -1,0 +1,80 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app
+  labels:
+    app: nginx
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: app-statefulset
+  namespace: app # Asegúrate de que el StatefulSet esté en el mismo namespace
+spec:
+  serviceName: "nginx-service" # Nombre del Headless Service que gestionará la red de los Pods
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: nginx:latest
+        name: nginx
+        ports:
+        - containerPort: 80
+        volumeMounts:
+          - mountPath: "/var/log/nginx"
+            name: nginx-logs # Hace referencia al volumeClaimTemplates
+            readOnly: false
+        command:
+          - "/bin/bash"
+          - "-c"
+          - "sleep infinity"
+  volumeClaimTemplates: # Aquí se define el template para los PVCs
+  - metadata:
+      name: nginx-logs
+      labels:
+        app: nginx
+    spec:
+      # Optional:
+      # storageClassName: <YOUR_STORAGE_CLASS_NAME> # Si tienes una StorageClass específica
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 50Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: nginx
+  name: app-service # Este debe ser un Headless Service para StatefulSet
+  namespace: app
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: nginx
+  clusterIP: None # Muy importante: hace que sea un Headless Service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: nginx
+  name: my-app # Este es el servicio que expondrá Nginx externamente (LoadBalancer)
+  namespace: app
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: nginx
+  type: LoadBalancer

@@ -1,0 +1,27 @@
+global:
+  resolve_timeout: 5m
+inhibit_rules: []
+receivers:
+  - name: "null"
+  - name: test_nutanix
+    email_configs:
+      - to: manuel.paredes@nutanix.com
+        from: test-nkp-alert@ntnx.com
+          #auth_username: test@gmail.com
+          #auth_password: password
+        send_resolved: true
+        require_tls: false
+        smarthost: "10.21.102.235:25" #set correct port if secure (default 587)
+route:
+  receiver: test_nutanix
+  group_by:
+    - namespace
+  group_interval: 1m
+  group_wait: 30s
+  repeat_interval: 12h
+  routes:
+    - matchers:
+        - alertname =~ "KubeProxyDown|Watchdog"
+      receiver: "test_nutanix"
+templates:
+  - /etc/alertmanager/config/*.tmpl

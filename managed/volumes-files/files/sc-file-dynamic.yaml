@@ -1,0 +1,21 @@
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+   name: nutanix-file-dynamic
+   annotations:
+        storageclass.kubernetes.io/is-default-class: "false"
+provisioner: csi.nutanix.com
+parameters:
+   csi.storage.k8s.io/node-publish-secret-name: nutanix-files-credentials
+   csi.storage.k8s.io/node-publish-secret-namespace: ntnx-system
+   csi.storage.k8s.io/controller-expand-secret-name: nutanix-files-credentials
+   csi.storage.k8s.io/controller-expand-secret-namespace: ntnx-system
+   csi.storage.k8s.io/provisioner-secret-name: nutanix-files-credentials
+   csi.storage.k8s.io/provisioner-secret-namespace: ntnx-system   
+   dynamicProv: ENABLED
+   nfsServerName: nkp-file # name of the file server
+   storageType: NutanixFiles
+   squashType: root-squash
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+

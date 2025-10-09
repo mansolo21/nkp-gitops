@@ -1,0 +1,43 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: jellyfin # Cambiado a un nombre más representativo para la aplicación Falco
+  namespace: jellyfin # O el namespace donde quieras desplegar Falco
+spec:
+  interval: 5m # Frecuencia con la que Flux verificará actualizaciones del chart
+  chart:
+    spec:
+      chart: ./jellyfin # EL NOMBRE EXACTO DEL CHART DENTRO DE TU REPOSITORIO (DEBE COINCIDIR CON Chart.yaml de Falco)
+      version: "10.10.7" # LA VERSIÓN EXACTA DEL CHART (DEBE COINCIDIR CON Chart.yaml de Falco)
+      sourceRef:
+        kind: GitRepository
+        name: nkp-gitops # Referencia a tu HelmRepository personalizado
+        namespace: kommander-flux # Namespace donde creaste el HelmRepository
+  values:
+    # Aquí irían los valores específicos para configurar Falco
+    # Por ejemplo, puedes revisar el 'values.yaml' del chart de Falco descargado
+    # y adaptar tus valores aquí. Algunos valores comunes podrían ser:
+    # ... otros valores que necesites configurar para Falco
+    ingress:
+      # -- Enable ingress resource
+      enabled: true
+      # -- IngressClass that will be used to implement the Ingress
+      ingressClassName: "kommander-traefik"
+      # -- Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations.
+      annotations: {}
+      # -- Default host for the ingress resource
+      hostname: jellyfin.local
+      # -- The Path to jellyfin. You may need to set this to '/*' in order to use this with ALB ingress controllers.
+      path: /
+      # -- Ingress path type
+      pathType: ImplementationSpecific
+      # -- Enable TLS configuration for the hostname defined at apiIngress.hostname parameter
+      tls: true
+      # -- The list of additional hostnames to be covered with this ingress record.
+      extraHosts: []
+      # -- Any additional paths that may need to be added to the ingress under the main host
+      extraPaths: []
+      # -- The tls configuration for additional hostnames to be covered with this ingress record.
+      extraTls: []
+      # -- Additional rules to be covered with this ingress record
+      extraRules: []

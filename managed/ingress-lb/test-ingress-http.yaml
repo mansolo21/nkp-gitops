@@ -1,0 +1,301 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-ingress
+---
+# --- Deployment app-a ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-a
+  namespace: test-ingress
+  labels:
+    app: app-a
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-a
+  template:
+    metadata:
+      labels:
+        app: app-a
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d
+        - name: html-content
+          mountPath: /usr/share/nginx/html
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: app-a-nginx-config
+      - name: html-content
+        configMap:
+          name: app-a-html-content
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-a-nginx-config
+  namespace: test-ingress
+data:
+  default.conf: |
+    server {
+        listen 80;
+        location / {
+            root   /usr/share/nginx/html;
+            index  index.html index.htm;
+        }
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-a-html-content
+  namespace: test-ingress
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>App A</title>
+    </head>
+    <body style="background-color: lightblue;">
+      <h1>Welcome to Application A</h1>
+      <p>This is the content for Application A.</p>
+    </body>
+    </html>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-app-a
+  namespace: test-ingress
+spec:
+  selector:
+    app: app-a
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+# --- Deployment app-b ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-b
+  namespace: test-ingress
+  labels:
+    app: app-b
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-b
+  template:
+    metadata:
+      labels:
+        app: app-b
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d
+        - name: html-content
+          mountPath: /usr/share/nginx/html
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: app-b-nginx-config
+      - name: html-content
+        configMap:
+          name: app-b-html-content
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-b-nginx-config
+  namespace: test-ingress
+data:
+  default.conf: |
+    server {
+        listen 80;
+        location / {
+            root   /usr/share/nginx/html;
+            index  index.html index.htm;
+        }
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-b-html-content
+  namespace: test-ingress
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>App B</title>
+    </head>
+    <body style="background-color: lightcoral;">
+      <h1>Welcome to Application B</h1>
+      <p>This is the content for Application B.</p>
+    </body>
+    </html>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-app-b
+  namespace: test-ingress
+spec:
+  selector:
+    app: app-b
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+# --- Deployment app-c ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-c
+  namespace: test-ingress
+  labels:
+    app: app-c
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-c
+  template:
+    metadata:
+      labels:
+        app: app-c
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d
+        - name: html-content
+          mountPath: /usr/share/nginx/html
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: app-c-nginx-config
+      - name: html-content
+        configMap:
+          name: app-c-html-content
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-c-nginx-config
+  namespace: test-ingress
+data:
+  default.conf: |
+    server {
+        listen 80;
+        location / {
+            root   /usr/share/nginx/html;
+            index  index.html index.htm;
+        }
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-c-html-content
+  namespace: test-ingress
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>App C</title>
+    </head>
+    <body style="background-color: lightgreen;">
+      <h1>Welcome to Application C</h1>
+      <p>This is the content for Application C.</p>
+    </body>
+    </html>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-app-c
+  namespace: test-ingress
+spec:
+  selector:
+    app: app-c
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+# --- Ingress ---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: multi-app-ingress
+  namespace: test-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: test-ingress-mw-traefik@kubernetescrd
+spec:
+  rules:
+  - host: app.domain.test
+    http:
+      paths:
+      - path: /a
+        pathType: Prefix
+        backend:
+          service:
+            name: service-app-a
+            port:
+              number: 80
+      - path: /b
+        pathType: Prefix
+        backend:
+          service:
+            name: service-app-b
+            port:
+              number: 80
+      - path: /c
+        pathType: Prefix
+        backend:
+          service:
+            name: service-app-c
+            port:
+              number: 80
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: mw-traefik
+  namespace: test-ingress
+spec:
+  stripPrefix:
+    prefixes:
+    - /a
+    - /b
+    - /c

@@ -1,0 +1,89 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-ingress
+---
+# --- Deployment app-a (ultra-simplificado, sin ConfigMaps) ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-a
+  namespace: test-ingress
+  labels:
+    app: app-a
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-a
+  template:
+    metadata:
+      labels:
+        app: app-a
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>App A</title>
+            </head>
+            <body style=\"background-color: lightblue;\">
+              <h1>Welcome to Application A</h1>
+              <p>This is the content for Application A.</p>
+            </body>
+            </html>
+            " > /usr/share/nginx/html/index.html && nginx -g "daemon off;"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-app-a
+  namespace: test-ingress
+spec:
+  selector:
+    app: app-a
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+# --- Ingress (simplificado) ---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: single-app-ingress
+  namespace: test-ingress
+  annotations:
+    # Asegúrate de usar la anotación correcta para tu Ingress Controller:
+    # Si usas Traefik:
+    # Si usas Nginx Ingress Controller (kubernetes/ingress-nginx):
+    # nginx.ingress.kubernetes.io/rewrite-target: /$2
+    cert-manager.io/cluster-issuer: selfsigned-issuer
+spec:
+  spec:
+  tls:
+  - hosts:
+    - app.demo.lab # El dominio para el que quieres el certificado
+    secretName: app-domain-test-tls # El nombre del Secret donde Cert-Manager guardará el certificado
+  rules:
+  - host: app.demo.lab
+    http:
+      paths:
+      - path: / # Expone en la ruta raíz
+        pathType: Prefix
+        backend:
+          service:
+            name: service-app-a
+            port:
+              number: 80
+

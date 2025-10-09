@@ -1,0 +1,88 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: bucket-writer-sa
+  namespace: apps
+---
+apiVersion: v1
+data:
+  AWS_ACCESS_KEY_ID: WsZtcCNUtFFWsWv2pjebQAC7EM9V8rgj
+  AWS_SECRET_ACCESS_KEY: NEo4uTAIH3aYAyJ4elRPFE5wn4azgUDC
+kind: Secret
+metadata:
+  name: bucket-credentials
+  namespace: apps
+type: Opaque
+---
+apiVersion: objectstorage.k8s.io/v1alpha1
+kind: BucketClaim
+metadata:
+  name: my-bucket-claim
+  namespace: apps
+spec:
+  bucketClassName: cosi-nutanix-nkp
+  protocols:
+  - s3
+---
+apiVersion: objectstorage.k8s.io/v1alpha1
+kind: BucketAccess
+metadata:
+  name: my-bucket-access
+spec:
+  bucketClaimName: my-bucket-claim
+  serviceAccountName: bucket-writer-sa
+  bucketAccessClassName: cosi-nutanix-nkp
+  credentialsSecretName: bucket-credentials 
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bucket-writer
+  namespace: apps
+  labels:
+    app: bucket-writer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bucket-writer
+  template:
+    metadata:
+      labels:
+        app: bucket-writer
+    spec:
+      serviceAccountName: bucket-writer-sa
+      containers:
+      - name: bucket-writer-container
+        image: alpine/git:latest # A simple image with git and basic tools
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          echo "Starting bucket writer..."
+          # Install s3fs or similar tool depending on your bucket type
+          # This example assumes an S3-compatible bucket and uses an Alpine image
+          # which might not have s3fs pre-installed.
+          # For actual S3, you might use a specific S3FS image or install it.
+          # For demonstration, we'll simulate writing to a mounted path.
+
+          # In a real scenario, your bucket provisioner would handle the actual mount
+          # and provide the path to the container.
+          # Here, we'll create a dummy mount point for demonstration.
+          mkdir -p /mnt/my-bucket
+          echo "Hello from Kubernetes to the bucket!" > /mnt/my-bucket/hello.txt
+          echo "File 'hello.txt' created in /mnt/my-bucket"
+          # In a real application, you'd verify the file exists on the S3 bucket.
+          ls -l /mnt/my-bucket
+          sleep infinity # Keep the container running for observation
+        volumeMounts:
+          - name: bucket-storage
+            mountPath: /mnt/my-bucket
+      volumes:
+        # The actual volume source for the bucket will depend on your provisioner.
+        # This is a placeholder for how a bucket volume would typically be defined
+        # after a BucketClaim is successfully provisioned and bound.
+        # For a real S3 bucket, this would typically be provided by the BucketAccess
+        # mechanism, possibly as an `csi` volume or similar.
+        # This example uses an emptyDir for demonstration, but in a real setup,
+        # your bucket provisioner would ensure the correct volume type.
+        - name: bucket-storage

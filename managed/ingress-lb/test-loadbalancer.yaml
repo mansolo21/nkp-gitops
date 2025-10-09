@@ -1,0 +1,110 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nginx-example
+  labels:
+    app: nginx
+---
+# El PersistentVolumeClaim 'nginx-logs' ha sido ELIMINADO ya que no es necesario
+# para el enfoque de logs en stdout/stderr y evita el error Multi-Attach.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-index-template
+  namespace: nginx-example
+data:
+  index.html.template: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Welcome to Nginx</title>
+        <style>
+          body { font-family: sans-serif; background-color: #f0f2f5; color: #333; margin: 50px; }
+          h1 { color: #0056b3; }
+          p { font-size: 1.1em; }
+          b { color: #d9534f; }
+        </style>
+    </head>
+    <body>
+        <h1>Hello from Nginx in Kubernetes!</h1>
+        <p>My internal IP is <b>${POD_IP}</b></p>
+        <p>My worker IP is <b>${NODE_IP}</b></p>
+        <p>My POD name is <b>${POD_NAME}</b></p>
+        <p>This information is dynamic and changes with each Pod.</p>
+    </body>
+    </html>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  namespace: nginx-example
+spec:
+  replicas: 3 # Escalado a 3 réplicas
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      volumes:
+        # El volumen 'nginx-logs' ha sido ELIMINADO
+        - name: nginx-template-volume # Volumen para montar el ConfigMap de la plantilla
+          configMap:
+            name: nginx-index-template
+            items:
+            - key: index.html.template
+              path: index.html.template
+
+      containers:
+      - image: nginx:1.17.6
+        name: nginx
+        ports:
+        - containerPort: 80
+        env: # Inyectamos las IPs y el nombre del POD como variables de entorno
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: NODE_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: POD_NAME # Variable de entorno para el nombre del POD
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        volumeMounts:
+          # El volumeMount para '/var/log/nginx' ha sido ELIMINADO
+          - mountPath: "/etc/nginx/html-template/" # Montamos la plantilla en un directorio
+            name: nginx-template-volume
+            readOnly: true # La plantilla no debe ser modificada
+
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            # Sustituye las variables de entorno en la plantilla y escribe el resultado en el index.html de Nginx
+            envsubst '$$POD_IP,$$NODE_IP,$$POD_NAME' < /etc/nginx/html-template/index.html.template > /usr/share/nginx/html/index.html &&
+            # Arranca Nginx. Los logs se irán a stdout/stderr por defecto.
+            nginx -g "daemon off;"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: nginx
+  name: my-nginx
+  namespace: nginx-example
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: load-balancer.demo.lab
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: nginx
+  type: LoadBalancer

@@ -1,0 +1,10 @@
+# set of properties of credentials granting access to buckets
+kind: BucketAccess
+apiVersion: objectstorage.k8s.io/v1alpha1
+metadata:
+  name: sample-bucketaccess
+spec:
+  bucketClaimName: sample-bucketclaim
+  protocol: s3
+  bucketAccessClassName: cosi-nutanix-nkp
+  credentialsSecretName: bucketcreds

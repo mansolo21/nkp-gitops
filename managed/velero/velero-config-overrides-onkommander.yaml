@@ -1,0 +1,12 @@
+# On the management cluster, apply the node agent configuration to Velero overrides
+# (note: if there is an existing Velero Workspace override, please merge the values 
+# with the contents of the override below so that the existing configuration is not lost)
+
+apiVersion: v1
+data:
+  values.yaml: |-
+    deployNodeAgent: true
+kind: ConfigMap
+metadata:
+  name: velero-config-overrides
+  namespace: nkp-pro-ex-02-fhrl9-rs5zn   #workspace-namespace of target clusters

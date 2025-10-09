@@ -1,0 +1,8 @@
+apiVersion: objectstorage.k8s.io/v1alpha1
+authenticationType: KEY
+driverName: ntnx.objectstorage.k8s.io
+kind: BucketAccessClass
+metadata:
+  name: cosi-nutanix-nkp
+parameters:
+  - read-only
