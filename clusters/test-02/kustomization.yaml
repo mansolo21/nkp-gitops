@@ -1,11 +1,5 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - external-dns-ns.yaml
-  - external-dns.yaml
-  
-# Opcional: patches para personalizar
-patchesStrategicMerge:
-  - patch-external-dns.yaml  # Si necesitas overrides
-  
-namespace: external-dns  # Namespace por defecto (si no lo defines en cada recurso)
+  - pacman-ns.yaml
+  - pacman-helm.yaml
