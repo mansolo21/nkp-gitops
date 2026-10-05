@@ -44,4 +44,9 @@ spec:
         - mountPath: "/etc/nginx/html-template/"
           name: nginx-template-volume
           readOnly: true
-        command: ["/bin/sh", "-c", "envsubst '\$POD_IP \$NODE_IP \$POD_NAME' < /etc/nginx/html-template/index.html.template > /usr/share/nginx/html/index.html && exec nginx -g 'daemon off;'"]
+        command:
+          - /bin/sh
+          - -c
+          - |
+            envsubst '$POD_IP $NODE_IP $POD_NAME' < /etc/nginx/html-template/index.html.template > /usr/share/nginx/html/index.html
+            exec nginx -g 'daemon off;'
